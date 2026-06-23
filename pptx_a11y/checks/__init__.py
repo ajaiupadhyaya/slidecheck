@@ -21,3 +21,14 @@ ALL_CHECKS = []  # populated by register() below
 def register(fn):
     ALL_CHECKS.append(fn)
     return fn
+
+
+def load_all():
+    """Import every check module so each @register call runs. Idempotent."""
+    from importlib import import_module
+    for name in (
+        "alt_text", "slide_titles", "metadata", "contrast",
+        "font_size", "link_text", "tables", "reading_order", "media_captions",
+    ):
+        import_module(f"{__name__}.{name}")
+    return ALL_CHECKS
