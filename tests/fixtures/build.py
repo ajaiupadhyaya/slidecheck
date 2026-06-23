@@ -11,8 +11,8 @@ _RED_PNG = base64.b64decode(
 
 def _add_picture(slide, alt: str | None):
     pic = slide.shapes.add_picture(io.BytesIO(_RED_PNG), Inches(1), Inches(1), Inches(1), Inches(1))
-    if alt is not None:
-        pic._element._nvXxPr.cNvPr.set("descr", alt)
+    # Explicitly set descr to empty string if None, otherwise set to provided text
+    pic._element._nvXxPr.cNvPr.set("descr", alt or "")
     return pic
 
 
