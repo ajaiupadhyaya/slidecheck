@@ -14,6 +14,7 @@ dependencies = [
 
 [project.scripts]
 slidecheck = "pptx_a11y.cli:main"
+slidecheck-gui = "pptx_a11y.gui:main"
 
 [build-system]
 requires = ["setuptools"]
