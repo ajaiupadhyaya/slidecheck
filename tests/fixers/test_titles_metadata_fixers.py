@@ -8,12 +8,36 @@ class _TitleDescriber:
     def describe(self, image_bytes, media_type, context):
         return "Overview"
 
+    def suggest_text(self, prompt):
+        return "Overview"
+
+
+class _NullTitleDescriber:
+    def describe(self, image_bytes, media_type, context):
+        return None
+
+    def suggest_text(self, prompt):
+        return None
+
 
 def test_title_fixer_fills_empty_title(tmp_path):
     prs = Presentation(deck_with_issues(str(tmp_path / "x.pptx")))
     changes = fix_titles(prs, _TitleDescriber())
-    assert any(c.fixer_id == "slide_title" and c.machine_generated for c in changes)
-    assert prs.slides[0].shapes.title.text.strip() != ""
+    title_changes = [c for c in changes if c.fixer_id == "slide_title"]
+    assert title_changes, "expected at least one slide_title change"
+    filled_change = title_changes[0]
+    assert filled_change.machine_generated is True
+    assert prs.slides[0].shapes.title.text.strip() == "Overview"
+
+
+def test_title_fixer_fallback_when_no_suggestion(tmp_path):
+    prs = Presentation(deck_with_issues(str(tmp_path / "x.pptx")))
+    changes = fix_titles(prs, _NullTitleDescriber())
+    title_changes = [c for c in changes if c.fixer_id == "slide_title"]
+    assert title_changes, "expected at least one slide_title change"
+    fallback_change = title_changes[0]
+    assert prs.slides[0].shapes.title.text.strip() == "Slide 1"
+    assert fallback_change.machine_generated is False
 
 
 def test_metadata_fixer_sets_title(tmp_path):

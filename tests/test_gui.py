@@ -6,6 +6,9 @@ class _StubDescriber:
     def describe(self, image_bytes, media_type, context):
         return "img"
 
+    def suggest_text(self, prompt):
+        return "Stub Title"
+
 
 def test_handle_drop_processes_and_opens_reports(tmp_path):
     a = deck_with_issues(str(tmp_path / "a.pptx"))

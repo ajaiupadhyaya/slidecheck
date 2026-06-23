@@ -1,11 +1,14 @@
 import os
 from pptx_a11y.pipeline import process_file, unique_path
-from tests.fixtures.build import deck_with_issues, clean_deck
+from tests.fixtures.build import deck_with_issues
 
 
 class _StubDescriber:
     def describe(self, image_bytes, media_type, context):
         return "A described image."
+
+    def suggest_text(self, prompt):
+        return "Stub Title"
 
 
 def test_process_file_produces_outputs_and_marks_fixed(tmp_path):

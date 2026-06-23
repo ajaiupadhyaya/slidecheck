@@ -13,5 +13,11 @@ report. **Originals are never modified** — a `*_accessible.pptx` copy is produ
 - **Reports (manual fix):** color contrast, small fonts, tables without headers / merged cells,
   vague link text, reading-order issues, uncaptioned media.
 
+## Known limitations (v0.1)
+
+1. Charts and linked pictures are flagged for missing alt text but are not auto-described — only embedded raster images (PNG, JPEG, GIF, TIFF) receive AI-generated alt text.
+2. EMF/WMF and other non-raster image formats cannot be auto-described and will always require a manual fix.
+3. Color-contrast checks assume a white slide background; dark-themed decks may produce false contrast warnings. Theme and inherited colors are reported as "indeterminate" rather than guessed.
+
 ## Develop
 - `uv sync` then `uv run pytest`

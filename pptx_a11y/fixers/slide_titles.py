@@ -20,7 +20,10 @@ def fix(prs, describer) -> list[Change]:
         if title.text.strip():
             continue
         context = _slide_text(slide) or f"slide {i + 1}"
-        suggestion = describer.describe(b"", "text/plain", f"Suggest a 3-6 word slide title. Slide text: {context}")
+        suggestion = describer.suggest_text(
+            f"Suggest a concise, descriptive slide title (3-6 words, no quotes) "
+            f"for a slide containing this text: {context}. Respond with only the title."
+        )
         new_title = (suggestion or f"Slide {i + 1}").strip()
         title.text = new_title
         changes.append(
@@ -28,7 +31,7 @@ def fix(prs, describer) -> list[Change]:
                 fixer_id="slide_title",
                 slide_index=i,
                 description=f'Added slide title: "{new_title}"',
-                machine_generated=True,
+                machine_generated=bool(suggestion),
             )
         )
     return changes

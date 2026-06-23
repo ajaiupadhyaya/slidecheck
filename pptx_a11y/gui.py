@@ -23,7 +23,7 @@ def handle_drop(paths, describer, opener=webbrowser.open):
 def _parse_drop(data: str) -> list[str]:
     """tkinterdnd2 delivers space-separated paths, brace-wrapped if they contain spaces."""
     import re
-    return re.findall(r"\{[^}]*\}|\S+", data) and [p.strip("{}") for p in re.findall(r"\{[^}]*\}|\S+", data)]
+    return [p.strip("{}") for p in re.findall(r"\{[^}]*\}|\S+", data)]
 
 
 def main():  # pragma: no cover - UI wiring

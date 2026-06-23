@@ -13,10 +13,14 @@ _PROMPT = (
 
 class Describer(Protocol):
     def describe(self, image_bytes: bytes, media_type: str, context: str) -> str | None: ...
+    def suggest_text(self, prompt: str) -> str | None: ...
 
 
 class NullDescriber:
     def describe(self, image_bytes: bytes, media_type: str, context: str) -> str | None:
+        return None
+
+    def suggest_text(self, prompt: str) -> str | None:
         return None
 
 
@@ -44,4 +48,17 @@ class ClaudeDescriber:
             text = resp.content[0].text.strip()
             return text or None
         except Exception:  # noqa: BLE001 - any failure degrades to flag-only
+            return None
+
+    def suggest_text(self, prompt: str) -> str | None:
+        try:
+            client = Anthropic(api_key=self._api_key)
+            resp = client.messages.create(
+                model=MODEL,
+                max_tokens=40,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            text = resp.content[0].text.strip()
+            return text or None
+        except Exception:  # noqa: BLE001 - any failure degrades to no suggestion
             return None

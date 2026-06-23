@@ -50,7 +50,7 @@ def render(result: FileResult) -> str:
             fixed = ' <span class="review">auto-fixed</span>' if f.auto_fixed else ""
             sug = f'<div class="sug">Suggestion: {escape(f.suggestion)}</div>' if f.suggestion else ""
             rows.append(
-                f'<div class="item"><span class="tag {f.severity.value}">{f.severity.value}</span>'
+                f'<div class="item"><span class="tag {escape(f.severity.value)}">{escape(f.severity.value)}</span>'
                 f'{escape(f.message)}{fixed}{sug}</div>'
             )
         for c in changes_by_slide.get(idx, []):
