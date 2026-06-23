@@ -22,11 +22,13 @@ def load_settings(path: str | None = None) -> dict:
 
 def save_api_key(key: str, path: str | None = None) -> None:
     path = path or _default_path()
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    os.makedirs(os.path.dirname(path), mode=0o700, exist_ok=True)
     data = load_settings(path)
     data["api_key"] = key
-    with open(path, "w", encoding="utf-8") as fh:
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as fh:
         json.dump(data, fh)
+    os.chmod(path, 0o600)
 
 
 def get_describer(settings: dict):

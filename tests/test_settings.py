@@ -1,3 +1,9 @@
+import os
+import sys
+import stat
+
+import pytest
+
 from pptx_a11y.settings import load_settings, save_api_key, get_describer
 from pptx_a11y.alt_text_ai import NullDescriber, ClaudeDescriber
 
@@ -15,3 +21,11 @@ def test_missing_settings_returns_empty(tmp_path):
 def test_get_describer_picks_implementation():
     assert isinstance(get_describer({}), NullDescriber)
     assert isinstance(get_describer({"api_key": "sk-x"}), ClaudeDescriber)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX permission bits not meaningful on Windows")
+def test_saved_settings_file_is_owner_only(tmp_path):
+    p = str(tmp_path / "settings.json")
+    save_api_key("sk-secret", p)
+    mode = stat.S_IMODE(os.stat(p).st_mode)
+    assert mode == 0o600
