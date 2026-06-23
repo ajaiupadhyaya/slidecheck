@@ -20,6 +20,9 @@ slidecheck-gui = "pptx_a11y.gui:main"
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.packages.find]
+include = ["pptx_a11y*"]
+
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
