@@ -41,7 +41,6 @@ def deck_with_issues(path: str) -> str:
     run = tb.paragraphs[0].add_run()
     run.text = "click here"
     run.font.size = Pt(10)             # too small
-    r = run._r
     # add a hyperlink so link_text check sees it
     run.hyperlink.address = "https://example.com"
     prs.save(path)

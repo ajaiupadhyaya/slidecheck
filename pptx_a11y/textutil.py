@@ -1,6 +1,3 @@
-from pptx.util import Pt
-
-
 def iter_runs(prs):
     for i, slide in enumerate(prs.slides):
         for shape in slide.shapes:

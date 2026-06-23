@@ -1,4 +1,3 @@
-import os
 from pptx import Presentation
 import pytest
 from pptx_a11y.loader import load_presentation, LoadError
