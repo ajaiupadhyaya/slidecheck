@@ -31,14 +31,24 @@ def check(prs) -> list[Finding]:
         if _is_decorative(shape):
             continue
         if not _alt(shape).strip():
+            if shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
+                message = "Image is missing alternative text."
+                suggestion = "Add a short description of the image's content/purpose."
+            else:
+                kind = "Chart" if shape.shape_type == MSO_SHAPE_TYPE.CHART else "Linked image"
+                message = f"{kind} is missing alternative text."
+                suggestion = (
+                    "Add a description manually in PowerPoint — charts and linked "
+                    "images cannot be auto-described."
+                )
             findings.append(
                 Finding(
                     check_id="alt_text",
                     severity=Severity.ERROR,
                     slide_index=slide_index,
                     shape_ref=shape_ref(slide_index, shape),
-                    message="Image is missing alternative text.",
-                    suggestion="Add a short description of the image's content/purpose.",
+                    message=message,
+                    suggestion=suggestion,
                 )
             )
     return findings
