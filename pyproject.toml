@@ -1,6 +1,6 @@
 [project]
 name = "slidecheck"
-version = "0.1.0"
+version = "0.3.0"
 authors = [
     { name = "ajaiupadhyaya", email = "ajaiupadhyaya@users.noreply.github.com" }
 ]
@@ -25,5 +25,6 @@ include = ["pptx_a11y*"]
 
 [dependency-groups]
 dev = [
+    "pyinstaller>=6.21.0",
     "pytest>=9.1.1",
 ]

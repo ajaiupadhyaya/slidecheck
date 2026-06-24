@@ -24,9 +24,6 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Add PyInstaller
-        run: uv add --dev pyinstaller
-
       - name: Run the test suite
         run: uv run pytest -q
 

@@ -5,6 +5,9 @@ from pptx_a11y.refs import shape_ref
 
 _VISUAL_TYPES = {MSO_SHAPE_TYPE.PICTURE, MSO_SHAPE_TYPE.LINKED_PICTURE, MSO_SHAPE_TYPE.CHART}
 
+# Namespace PowerPoint uses when a shape is flagged via "Mark as Decorative".
+_DECORATIVE_NS = "http://schemas.microsoft.com/office/drawing/2017/decorative"
+
 
 def _alt(shape) -> str:
     try:
@@ -14,12 +17,20 @@ def _alt(shape) -> str:
 
 
 def _is_decorative(shape) -> bool:
-    # PowerPoint marks decorative images with a specific extension; treat a
-    # title of "decorative" as decorative for our purposes (and skip).
+    # A decorative image needs no alt text, so it must not be flagged. Detect
+    # both (a) PowerPoint's native "Mark as Decorative" — an <adec:decorative>
+    # extension element inside cNvPr — and (b) a "decorative" title, used as a
+    # manual workaround in older PowerPoint versions.
     try:
-        return (shape._element._nvXxPr.cNvPr.get("title") or "").strip().lower() == "decorative"
+        cNvPr = shape._element._nvXxPr.cNvPr
     except Exception:  # noqa: BLE001
         return False
+    if (cNvPr.get("title") or "").strip().lower() == "decorative":
+        return True
+    for dec in cNvPr.iter(f"{{{_DECORATIVE_NS}}}decorative"):
+        if (dec.get("val") or "1") not in ("0", "false"):
+            return True
+    return False
 
 
 @register

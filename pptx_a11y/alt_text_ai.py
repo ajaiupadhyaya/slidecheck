@@ -28,15 +28,24 @@ class ClaudeDescriber:
     def __init__(self, api_key: str):
         self._api_key = api_key
         self._client = None
+        self._client_failed = False
 
     def _get_client(self):
+        if self._client_failed:
+            return None
         if self._client is None:
-            self._client = Anthropic(api_key=self._api_key)
+            try:
+                self._client = Anthropic(api_key=self._api_key)
+            except Exception:  # noqa: BLE001 - degrade to flag-only on any client error
+                self._client_failed = True  # remember, so we don't retry per image
+                return None
         return self._client
 
     def describe(self, image_bytes: bytes, media_type: str, context: str) -> str | None:
         try:
             client = self._get_client()
+            if client is None:
+                return None
             b64 = base64.standard_b64encode(image_bytes).decode("ascii")
             resp = client.messages.create(
                 model=MODEL,
@@ -59,6 +68,8 @@ class ClaudeDescriber:
     def suggest_text(self, prompt: str) -> str | None:
         try:
             client = self._get_client()
+            if client is None:
+                return None
             resp = client.messages.create(
                 model=MODEL,
                 max_tokens=40,

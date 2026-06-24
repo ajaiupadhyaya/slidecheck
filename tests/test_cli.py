@@ -12,6 +12,10 @@ def test_cli_processes_folder(tmp_path, monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "a.pptx" in out and "b.pptx" in out
     assert (tmp_path / "a_accessible.pptx").exists()
+    # folder processing writes a batch summary linking each report
+    assert (tmp_path / "index.html").exists()
+    index = (tmp_path / "index.html").read_text(encoding="utf-8")
+    assert "a_a11y_report.html" in index and "b_a11y_report.html" in index
 
 
 def test_cli_bad_path_returns_nonzero():
