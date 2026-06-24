@@ -27,10 +27,16 @@ class NullDescriber:
 class ClaudeDescriber:
     def __init__(self, api_key: str):
         self._api_key = api_key
+        self._client = None
+
+    def _get_client(self):
+        if self._client is None:
+            self._client = Anthropic(api_key=self._api_key)
+        return self._client
 
     def describe(self, image_bytes: bytes, media_type: str, context: str) -> str | None:
         try:
-            client = Anthropic(api_key=self._api_key)
+            client = self._get_client()
             b64 = base64.standard_b64encode(image_bytes).decode("ascii")
             resp = client.messages.create(
                 model=MODEL,
@@ -52,7 +58,7 @@ class ClaudeDescriber:
 
     def suggest_text(self, prompt: str) -> str | None:
         try:
-            client = Anthropic(api_key=self._api_key)
+            client = self._get_client()
             resp = client.messages.create(
                 model=MODEL,
                 max_tokens=40,
