@@ -1,14 +1,20 @@
+import re
+
 from pptx_a11y.checks import register
 from pptx_a11y.models import Finding, Severity
 from pptx_a11y.refs import shape_ref
 from pptx_a11y.textutil import iter_runs
 
 _BAD = {"click here", "here", "link", "read more", "more", "this"}
+# A bare domain/URL used as link text, e.g. "example.com" or "site.org/path".
+_DOMAINISH = re.compile(r"^[\w-]+(\.[\w-]+)*\.[a-z]{2,24}(/\S*)?$")
 
 
 def _looks_like_url(text: str) -> bool:
     t = text.strip().lower()
-    return t.startswith("http://") or t.startswith("https://") or t.startswith("www.")
+    if t.startswith(("http://", "https://", "www.")):
+        return True
+    return " " not in t and bool(_DOMAINISH.match(t))
 
 
 @register

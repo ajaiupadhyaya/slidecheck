@@ -46,3 +46,11 @@ def test_metadata_fixer_sets_title(tmp_path):
     changes = fix_metadata(prs, _TitleDescriber())
     assert any(c.fixer_id == "metadata" for c in changes)
     assert prs.core_properties.title.strip() != ""
+
+
+def test_metadata_fixer_sets_language(tmp_path):
+    prs = Presentation(deck_with_issues(str(tmp_path / "x.pptx")))
+    prs.core_properties.language = ""
+    changes = fix_metadata(prs, _TitleDescriber())
+    assert prs.core_properties.language.strip() != ""
+    assert any("language" in c.description.lower() for c in changes)

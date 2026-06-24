@@ -16,13 +16,15 @@ def fill_rgb(fill_owner):
 
 
 def iter_runs(prs):
-    for i, slide in enumerate(prs.slides):
-        for shape in slide.shapes:
-            if not shape.has_text_frame:
-                continue
-            for para in shape.text_frame.paragraphs:
-                for run in para.runs:
-                    yield i, shape, para, run
+    # Descend into groups (via iter_shapes) so text nested inside grouped
+    # shapes is checked too, not just top-level shapes.
+    from pptx_a11y.checks import iter_shapes
+    for i, shape in iter_shapes(prs):
+        if not shape.has_text_frame:
+            continue
+        for para in shape.text_frame.paragraphs:
+            for run in para.runs:
+                yield i, shape, para, run
 
 
 def run_rgb(run):

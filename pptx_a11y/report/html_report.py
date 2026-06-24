@@ -38,6 +38,7 @@ def render(result: FileResult) -> str:
         f'<span class="pill warning">{s["warning"]} warnings</span>'
         f'<span class="pill info">{s["info"]} info</span>'
         f'<span class="pill ok">{s["auto_fixed"]} auto-fixed</span>'
+        f'<span class="pill warning">{s["manual"]} need manual fix</span>'
         "</div>"
     )
 

@@ -1,6 +1,6 @@
 import json
 from pptx_a11y.models import FileResult, Finding, Change, Severity
-from pptx_a11y.report import json_report, html_report
+from pptx_a11y.report import json_report, html_report, summary_counts
 
 
 def _result():
@@ -42,3 +42,14 @@ def test_html_escapes_user_text():
     r.findings[0].message = "bad <script>alert(1)</script>"
     html = html_report.render(r)
     assert "<script>alert(1)</script>" not in html
+
+
+def test_summary_counts_manual_attention():
+    # one ERROR (auto_fixed) + one WARNING (not fixed) -> 1 needs manual fix
+    s = summary_counts(_result())
+    assert s["manual"] == 1
+
+
+def test_html_shows_needs_manual_fix_pill():
+    html = html_report.render(_result())
+    assert "need manual fix" in html.lower()

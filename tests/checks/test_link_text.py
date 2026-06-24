@@ -7,3 +7,25 @@ def test_flags_click_here(tmp_path):
     prs = Presentation(deck_with_issues(str(tmp_path / "x.pptx")))
     findings = check(prs)
     assert any(f.check_id == "link_text" for f in findings)
+
+
+def _deck_with_link(path, text):
+    from pptx.util import Inches
+    prs = Presentation()
+    s = prs.slides.add_slide(prs.slide_layouts[6])
+    tf = s.shapes.add_textbox(Inches(1), Inches(1), Inches(4), Inches(1)).text_frame
+    run = tf.paragraphs[0].add_run()
+    run.text = text
+    run.hyperlink.address = "https://example.com/page"
+    prs.save(path)
+    return path
+
+
+def test_flags_naked_domain_link_text(tmp_path):
+    prs = Presentation(_deck_with_link(str(tmp_path / "d.pptx"), "example.com"))
+    assert any(f.check_id == "link_text" for f in check(prs))
+
+
+def test_descriptive_link_text_is_ok(tmp_path):
+    prs = Presentation(_deck_with_link(str(tmp_path / "ok.pptx"), "Our research overview"))
+    assert not any(f.check_id == "link_text" for f in check(prs))

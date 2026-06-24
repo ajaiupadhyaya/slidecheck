@@ -12,7 +12,10 @@ def check(prs) -> list[Finding]:
         if len(shapes) <= 1:
             continue
         title = slide.shapes.title
-        if title is not None and shapes[0] is not title:
+        # Compare the underlying XML elements: python-pptx returns a fresh
+        # wrapper object on every .title / .shapes[0] access, so an identity
+        # ("is") check between wrappers is always True and never discriminates.
+        if title is not None and shapes[0]._element is not title._element:
             findings.append(
                 Finding(
                     check_id="reading_order",
