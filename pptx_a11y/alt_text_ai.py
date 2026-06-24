@@ -28,12 +28,16 @@ class ClaudeDescriber:
     def __init__(self, api_key: str):
         self._api_key = api_key
         self._client = None
+        self._client_failed = False
 
     def _get_client(self):
+        if self._client_failed:
+            return None
         if self._client is None:
             try:
                 self._client = Anthropic(api_key=self._api_key)
             except Exception:  # noqa: BLE001 - degrade to flag-only on any client error
+                self._client_failed = True  # remember, so we don't retry per image
                 return None
         return self._client
 

@@ -10,6 +10,10 @@ from urllib.parse import quote
 from pptx_a11y.models import FileResult
 from pptx_a11y.report import summary_counts
 
+# Marks a file as one SlideCheck generated, so re-runs overwrite our own index
+# but never clobber a user's pre-existing index.html in the deck folder.
+_MARKER = "<!-- slidecheck-batch-index -->"
+
 _CSS = """
 body{font-family:system-ui,Arial,sans-serif;margin:2rem;color:#1a1a1a}
 h1{font-size:1.4rem}
@@ -68,7 +72,7 @@ def render(results: list[FileResult]) -> str:
     )
     return (
         "<!doctype html><html lang='en'><head><meta charset='utf-8'>"
-        f"<title>SlideCheck batch summary</title><style>{_CSS}</style></head>"
+        f"{_MARKER}<title>SlideCheck batch summary</title><style>{_CSS}</style></head>"
         f"<body>{head}{table}</body></html>"
     )
 
@@ -76,10 +80,20 @@ def render(results: list[FileResult]) -> str:
 def write_index(results: list[FileResult], out_dir: str, filename: str = "index.html") -> str:
     """Render and write the batch index into out_dir; return its path.
 
-    Overwrites a previous index.html (a regenerated artifact, like the per-file
-    reports), but never touches an original deck.
+    Overwrites a previous SlideCheck-generated index (identified by _MARKER),
+    but if a user's own index.html is already there, writes to a disambiguated
+    name instead — we never clobber a file we did not create.
     """
     path = os.path.join(out_dir, filename)
+    if os.path.exists(path):
+        try:
+            with open(path, encoding="utf-8", errors="ignore") as fh:
+                existing = fh.read()
+        except OSError:
+            existing = ""
+        if _MARKER not in existing:
+            from pptx_a11y.pipeline import unique_path
+            path = unique_path(path)
     with open(path, "w", encoding="utf-8") as fh:
         fh.write(render(results))
     return path

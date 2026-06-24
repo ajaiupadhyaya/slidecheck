@@ -5,10 +5,9 @@ A Windows `.exe` must be built on Windows (it cannot be cross-compiled from macO
 ## Option A — on a Windows machine
 1. Install uv: https://docs.astral.sh/uv/
 2. `git clone <repo>` and `cd slidecheck`
-3. `uv sync`
-4. `uv add --dev pyinstaller`
-5. `uv run pyinstaller packaging/slidecheck.spec`
-6. The app is in `dist/SlideCheck/`. Zip that folder; the user double-clicks `SlideCheck.exe`.
+3. `uv sync`  (installs PyInstaller — it is pinned in the dev dependency group)
+4. `uv run pyinstaller packaging/slidecheck.spec`
+5. The app is in `dist/SlideCheck/`. Zip that folder; the user double-clicks `SlideCheck.exe`.
 
 ## Option B — GitHub Actions (no Windows machine needed)
 The repo already ships this as `.github/workflows/build-windows.yml` (runs on

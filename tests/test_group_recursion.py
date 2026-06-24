@@ -5,6 +5,7 @@ from pptx.util import Inches, Pt
 
 from pptx_a11y.checks.font_size import check as font_check
 from pptx_a11y.checks.link_text import check as link_check
+from pptx_a11y.checks.tables import check as table_check
 from pptx_a11y.textutil import iter_runs
 
 
@@ -39,3 +40,24 @@ def test_link_text_check_sees_grouped_link(tmp_path):
         str(tmp_path / "g.pptx"), "click here", link="https://example.com"
     )
     assert any(f.check_id == "link_text" for f in link_check(Presentation(p)))
+
+
+def test_tables_check_sees_table_inside_group(tmp_path):
+    """python-pptx GroupShapes has no add_table(), so build a headerless table
+    then relocate its graphicFrame element into a group container at the XML
+    level — the tables check must still reach it via iter_shapes recursion."""
+    prs = Presentation()
+    s = prs.slides.add_slide(prs.slide_layouts[6])  # Blank
+    gf = s.shapes.add_table(2, 2, Inches(1), Inches(1), Inches(4), Inches(2))
+    gf.table.first_row = False  # -> "no header row" ERROR
+    group = s.shapes.add_group_shape()
+
+    sp_tree = s.shapes._spTree
+    sp_tree.remove(gf._element)
+    group._element.append(gf._element)  # table now lives inside the group
+
+    p = str(tmp_path / "tg.pptx")
+    prs.save(p)
+
+    findings = table_check(Presentation(p))
+    assert any(f.check_id == "table" for f in findings)

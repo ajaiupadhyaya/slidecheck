@@ -25,6 +25,7 @@ For a folder, each deck gets its own report **and** a single `index.html` summar
 3. Color contrast resolves the real shape/slide/layout/master background; only when none of those is a solid color does it fall back to assuming white, and it says so in the message. Theme/inherited text colors are reported as "indeterminate" rather than guessed.
 4. Font-size checks only see explicit run-level sizes; text whose size is inherited from a layout/master placeholder is not measured.
 5. Uncaptioned-media detection flags every embedded audio/video as "may lack captions" — it cannot inspect for an actual caption track.
+6. For text inside a grouped shape, contrast is measured against the slide/layout/master background, not the group's own fill.
 
 ## Develop
 - `uv sync` then `uv run pytest`

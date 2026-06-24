@@ -19,6 +19,7 @@ def fix(prs, describer) -> list[Change]:
             Change(
                 fixer_id="metadata",
                 slide_index=0,
+                shape_ref="doc:title",
                 description=f'Set document title to "{new}".',
                 machine_generated=False,
             )
@@ -29,6 +30,7 @@ def fix(prs, describer) -> list[Change]:
             Change(
                 fixer_id="metadata",
                 slide_index=0,
+                shape_ref="doc:language",
                 description=f'Set document language to "{_DEFAULT_LANGUAGE}" (review if the deck is not in English).',
                 machine_generated=False,
             )

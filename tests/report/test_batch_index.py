@@ -1,3 +1,5 @@
+import os
+
 from pptx_a11y.models import Change, FileResult, Finding, Severity
 from pptx_a11y.report import batch_index
 
@@ -39,3 +41,17 @@ def test_write_index_writes_file(tmp_path):
     assert path.endswith("index.html")
     assert (tmp_path / "index.html").exists()
     assert "Lecture 1.pptx" in (tmp_path / "index.html").read_text(encoding="utf-8")
+
+
+def test_write_index_overwrites_its_own_previous(tmp_path):
+    p1 = batch_index.write_index(_results(), str(tmp_path))
+    p2 = batch_index.write_index(_results(), str(tmp_path))
+    assert p1 == p2  # our own index.html is regenerated in place, not duplicated
+
+
+def test_write_index_does_not_clobber_a_user_index(tmp_path):
+    user = tmp_path / "index.html"
+    user.write_text("MY OWN PAGE", encoding="utf-8")
+    path = batch_index.write_index(_results(), str(tmp_path))
+    assert user.read_text(encoding="utf-8") == "MY OWN PAGE"  # untouched
+    assert path != str(user) and os.path.exists(path)  # ours written elsewhere
