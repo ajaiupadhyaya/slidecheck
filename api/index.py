@@ -7,15 +7,17 @@ local development.
 """
 import base64
 import hmac
+import json
 import os
 
-from fastapi import FastAPI, HTTPException, Request, UploadFile
+from fastapi import FastAPI, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from pptx_a11y.settings import get_describer
+from pptx_a11y.web.analyze_service import analyze_upload
 from pptx_a11y.web.describers import CappedDescriber
-from pptx_a11y.web.service import process_uploads
+from pptx_a11y.web.export_service import export_with_plan
 
 app = FastAPI(title="SlideCheck")
 
@@ -42,12 +44,15 @@ def health():
     return {"ok": True}
 
 
-@app.post("/api/process")
-async def process(request: Request, files: list[UploadFile]):
+@app.post("/api/analyze")
+async def analyze(request: Request, files: list[UploadFile]):
     _check_password(request)
+    if not files:
+        raise HTTPException(status_code=400, detail="No files were uploaded.")
     limit = _max_upload_bytes()
     mb = limit // (1024 * 1024)
-    uploads: list[tuple[str, bytes]] = []
+    describer = CappedDescriber(get_describer({}), _max_ai_images())
+    results = []
     for f in files:
         name = f.filename or "upload.pptx"
         if not name.lower().endswith(".pptx"):
@@ -55,27 +60,36 @@ async def process(request: Request, files: list[UploadFile]):
         data = await f.read()
         if len(data) > limit:
             raise HTTPException(status_code=413, detail=f"{name} is larger than the {mb} MB limit.")
-        uploads.append((name, data))
-    if not uploads:
-        raise HTTPException(status_code=400, detail="No files were uploaded.")
+        results.append(analyze_upload(name, data, describer))
+    return JSONResponse({"files": results})
 
-    describer = CappedDescriber(get_describer({}), _max_ai_images())
-    result = process_uploads(uploads, describer)
 
-    payload = [
-        {
-            "filename": out.filename,
-            "error": out.error,
-            "summary": out.summary,
-            "report_html": out.report_html,
-            "fixed_filename": out.fixed_filename,
-            "fixed_pptx_b64": (
-                base64.b64encode(out.fixed_bytes).decode("ascii") if out.fixed_bytes else None
-            ),
-        }
-        for out in result.files
-    ]
-    return JSONResponse({"files": payload})
+@app.post("/api/export")
+async def export(request: Request, files: list[UploadFile], plan: str = Form(...)):
+    _check_password(request)
+    try:
+        plan_data = json.loads(plan)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid fix plan.")
+    if not isinstance(plan_data, list):
+        raise HTTPException(status_code=400, detail="Invalid fix plan.")
+    limit = _max_upload_bytes()
+    mb = limit // (1024 * 1024)
+    results = []
+    for f in files:
+        name = f.filename or "upload.pptx"
+        if not name.lower().endswith(".pptx"):
+            raise HTTPException(status_code=400, detail=f"Not a PowerPoint (.pptx) file: {name}")
+        data = await f.read()
+        if len(data) > limit:
+            raise HTTPException(status_code=413, detail=f"{name} is larger than the {mb} MB limit.")
+        result = export_with_plan(name, data, plan_data)
+        fixed_bytes = result.pop("fixed_bytes", None)
+        result["fixed_pptx_b64"] = (
+            base64.b64encode(fixed_bytes).decode("ascii") if fixed_bytes else None
+        )
+        results.append(result)
+    return JSONResponse({"files": results})
 
 
 # Local dev / e2e only — registered last so the /api routes match first.

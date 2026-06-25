@@ -1,5 +1,6 @@
 from pptx_a11y.checks import register
 from pptx_a11y.models import Finding, Severity
+from pptx_a11y.refs import shape_target
 
 
 @register
@@ -23,6 +24,15 @@ def check(prs) -> list[Finding]:
                     slide_index=i,
                     message="Slide title is not first in the reading order.",
                     suggestion="Check the selection pane so the title is read first.",
+                    # standards + remediation metadata
+                    sc_refs=["1.3.2"],
+                    wcag_version="2.0",
+                    section508=True,
+                    category="structure",
+                    fixable=False,
+                    fix_action=None,
+                    current_value=None,
+                    target=shape_target(i, title),
                 )
             )
     return findings

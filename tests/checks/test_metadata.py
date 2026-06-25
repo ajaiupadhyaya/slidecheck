@@ -9,6 +9,12 @@ def test_flags_missing_core_title(tmp_path):
     prs.save(p)
     findings = check(Presentation(p))
     assert any("title" in f.message.lower() for f in findings)
+    # metadata assertions
+    title_hit = next(f for f in findings if f.shape_ref == "doc:title")
+    assert title_hit.fix_action == "set_doc_title"
+    assert title_hit.fixable is True
+    assert title_hit.target == {"scope": "document", "field": "title"}
+    assert title_hit.sc_refs == ["2.4.2"]
 
 
 def test_title_present_not_flagged_for_title(tmp_path):

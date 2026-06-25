@@ -29,6 +29,7 @@ def load_all():
     for name in (
         "alt_text", "slide_titles", "metadata", "contrast",
         "font_size", "link_text", "tables", "reading_order", "media_captions",
+        "motion", "sensory", "use_of_color",
     ):
         import_module(f"{__name__}.{name}")
     return ALL_CHECKS

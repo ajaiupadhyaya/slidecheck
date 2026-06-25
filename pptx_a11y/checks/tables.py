@@ -1,6 +1,6 @@
 from pptx_a11y.checks import iter_shapes, register
 from pptx_a11y.models import Finding, Severity
-from pptx_a11y.refs import shape_ref
+from pptx_a11y.refs import shape_ref, shape_target
 
 
 @register
@@ -19,6 +19,15 @@ def check(prs) -> list[Finding]:
                     shape_ref=shape_ref(i, shape),
                     message="Table has no header row.",
                     suggestion="Mark the first row as a header row.",
+                    # standards + remediation metadata
+                    sc_refs=["1.3.1"],
+                    wcag_version="2.0",
+                    section508=True,
+                    category="structure",
+                    fixable=True,
+                    fix_action="set_table_header",
+                    current_value=None,
+                    target=shape_target(i, shape),
                 )
             )
         # merged-cell detection: a spanned cell reports span_height/width > 1
@@ -33,6 +42,15 @@ def check(prs) -> list[Finding]:
                             shape_ref=shape_ref(i, shape),
                             message="Table contains merged cells.",
                             suggestion="Avoid merged cells; use a simple grid.",
+                            # standards + remediation metadata
+                            sc_refs=["1.3.1"],
+                            wcag_version="2.0",
+                            section508=True,
+                            category="structure",
+                            fixable=False,
+                            fix_action=None,
+                            current_value=None,
+                            target=shape_target(i, shape),
                         )
                     )
                     break
