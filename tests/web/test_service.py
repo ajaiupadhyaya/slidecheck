@@ -48,3 +48,27 @@ def test_processing_leaves_no_files_in_cwd(tmp_path, monkeypatch):
     process_uploads([("d.pptx", data)], NullDescriber())
     leftover = sorted(n for n in os.listdir(tmp_path) if n.endswith((".pptx", ".html", ".json")))
     assert leftover == ["kept.pptx"]  # only the fixture, no engine artifacts
+
+
+def test_generic_engine_exception_becomes_file_error(tmp_path, monkeypatch):
+    import pptx_a11y.web.service as svc
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(svc, "process_file", boom)
+    res = process_uploads([("x.pptx", _bytes(tmp_path, clean_deck))], NullDescriber())
+    assert len(res.files) == 1
+    assert res.files[0].error == "boom"
+    assert res.files[0].fixed_bytes is None
+
+
+def test_same_named_batch_uploads_do_not_collide(tmp_path):
+    clean = _bytes(tmp_path, clean_deck, "clean.pptx")
+    issues = _bytes(tmp_path, deck_with_issues, "issues.pptx")
+    res = process_uploads([("slides.pptx", clean), ("slides.pptx", issues)], NullDescriber())
+    assert len(res.files) == 2
+    assert all(o.error is None for o in res.files)
+    # distinct content preserved, not overwritten: one clean, one with errors
+    assert res.files[0].summary["error"] == 0
+    assert res.files[1].summary["error"] >= 1

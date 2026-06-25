@@ -30,19 +30,27 @@ def _stem(name: str) -> str:
 
 def process_uploads(uploads: list[tuple[str, bytes]], describer) -> WebResult:
     """uploads: list of (original_filename, file_bytes). Returns one FileOutput
-    per upload with rendered report HTML and fixed-file bytes."""
+    per upload with rendered report HTML and fixed-file bytes. Each upload is
+    processed in its own subdirectory of a TemporaryDirectory that is removed on
+    return, so nothing persists and same-named uploads never collide."""
     outputs: list[FileOutput] = []
     with tempfile.TemporaryDirectory() as tmp:
-        for filename, data in uploads:
-            in_path = os.path.join(tmp, f"{_stem(filename)}.pptx")
-            with open(in_path, "wb") as fh:
-                fh.write(data)
-            result = process_file(in_path, describer, out_dir=tmp)
-            if result.error:
-                outputs.append(FileOutput(filename=filename, error=result.error))
+        for i, (filename, data) in enumerate(uploads):
+            work = os.path.join(tmp, str(i))
+            os.makedirs(work, exist_ok=True)
+            in_path = os.path.join(work, f"{_stem(filename)}.pptx")
+            try:
+                with open(in_path, "wb") as fh:
+                    fh.write(data)
+                result = process_file(in_path, describer, out_dir=work)
+                if result.error:
+                    outputs.append(FileOutput(filename=filename, error=result.error))
+                    continue
+                with open(result.output_path, "rb") as fh:
+                    fixed_bytes = fh.read()
+            except Exception as exc:  # noqa: BLE001 - any failure becomes a per-file error, never a 500
+                outputs.append(FileOutput(filename=filename, error=str(exc)))
                 continue
-            with open(result.output_path, "rb") as fh:
-                fixed_bytes = fh.read()
             outputs.append(
                 FileOutput(
                     filename=filename,
