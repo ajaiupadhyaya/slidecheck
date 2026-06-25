@@ -42,6 +42,16 @@ def test_corrupt_upload_surfaces_error(tmp_path):
     assert res.files[0].fixed_bytes is None
 
 
+def test_corrupt_upload_error_hides_temp_path(tmp_path):
+    import tempfile
+
+    res = process_uploads([("broken deck.pptx", b"definitely not a pptx")], NullDescriber())
+    err = res.files[0].error
+    assert err
+    assert tempfile.gettempdir() not in err      # no server temp path in the error
+    assert "broken deck.pptx" in err              # the user's filename instead
+
+
 def test_processing_leaves_no_files_in_cwd(tmp_path, monkeypatch):
     data = _bytes(tmp_path, clean_deck, "kept.pptx")
     monkeypatch.chdir(tmp_path)

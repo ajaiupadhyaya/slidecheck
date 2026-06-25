@@ -1,0 +1,14 @@
+.git
+.venv
+tests
+docs
+packaging
+dist
+build
+*.egg-info
+.pytest_cache
+.superpowers
+.playwright-mcp
+**/__pycache__
+*.pyc
+uv.lock
