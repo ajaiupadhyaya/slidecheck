@@ -32,5 +32,5 @@ def save_api_key(key: str, path: str | None = None) -> None:
 
 
 def get_describer(settings: dict):
-    key = (settings.get("api_key") or "").strip()
+    key = (settings.get("api_key") or os.environ.get("ANTHROPIC_API_KEY") or "").strip()
     return ClaudeDescriber(key) if key else NullDescriber()
