@@ -17,6 +17,16 @@ class Finding:
     shape_ref: str | None = None
     suggestion: str | None = None
     auto_fixed: bool = False
+    # standards + remediation metadata (all defaulted for backward-compat)
+    sc_refs: list[str] = field(default_factory=list)
+    wcag_version: str = ""          # "2.0" | "2.1" | "2.2" | ""
+    section508: bool = False
+    category: str = ""              # images|structure|color|links|media|motion|document|text
+    fixable: bool = False
+    fix_action: str | None = None
+    current_value: str | None = None
+    suggested_value: str | None = None
+    target: dict = field(default_factory=dict)
 
 
 @dataclass
