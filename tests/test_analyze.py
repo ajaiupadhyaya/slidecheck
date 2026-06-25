@@ -130,6 +130,26 @@ def test_finding_to_dict_id_is_stable_string(issues_prs):
     assert str(f.slide_index) in d["id"]
 
 
+def test_finding_to_dict_ids_unique_for_colliding_findings():
+    """Two findings sharing check_id+slide+shape_ref must get distinct ids when
+    serialized with a position index (the client keys its fix-plan + live score
+    by id; a collision would drop an accepted fix or inflate the score)."""
+    from pptx_a11y.models import Finding, Severity
+
+    a = Finding(check_id="link_text", severity=Severity.WARNING, slide_index=0,
+                message="m", shape_ref="slide0:shape2")
+    b = Finding(check_id="link_text", severity=Severity.WARNING, slide_index=0,
+                message="m", shape_ref="slide0:shape2")
+    assert finding_to_dict(a, 0)["id"] != finding_to_dict(b, 1)["id"]
+
+
+def test_analyze_result_finding_ids_all_unique(issues_prs):
+    from pptx_a11y.alt_text_ai import NullDescriber
+
+    ids = [f["id"] for f in analyze(issues_prs, NullDescriber())["findings"]]
+    assert len(ids) == len(set(ids)), "analyze() finding ids must be unique"
+
+
 def test_finding_to_dict_sc_refs_is_list(issues_prs):
     findings = run_checks(issues_prs)
     for f in findings:

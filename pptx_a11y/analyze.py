@@ -185,15 +185,22 @@ def generate_suggestions(prs, findings: list[Finding], describer: "Describer") -
 # finding_to_dict
 # ---------------------------------------------------------------------------
 
-def finding_to_dict(f: Finding) -> dict:
+def finding_to_dict(f: Finding, index: int | None = None) -> dict:
     """Return a JSON-safe dict representation of a Finding.
 
     All fields are included.  Enums are serialized to their .value string.
-    The synthetic 'id' field is a stable string combining check_id, slide_index,
-    and shape_ref.
+    The synthetic 'id' field combines check_id, slide_index, shape_ref, and —
+    when ``index`` is given — the finding's position in the response.  The
+    position suffix guarantees ids are UNIQUE within a single analysis even
+    when two findings share check_id + slide + shape_ref (e.g. two hyperlink
+    runs in one text box, or a table that is both header-less and has merged
+    cells).  The client keys its fix-plan and live score by this id, so a
+    collision would otherwise silently drop an accepted fix or inflate the
+    score.
     """
+    suffix = f":{index}" if index is not None else ""
     return {
-        "id": f"{f.check_id}:{f.slide_index}:{f.shape_ref or ''}",
+        "id": f"{f.check_id}:{f.slide_index}:{f.shape_ref or ''}{suffix}",
         "check_id": f.check_id,
         "severity": f.severity.value,
         "slide_index": f.slide_index,
@@ -230,7 +237,7 @@ def analyze(prs, describer: "Describer") -> dict:
     findings = run_checks(prs)
     generate_suggestions(prs, findings, describer)
     return {
-        "findings": [finding_to_dict(f) for f in findings],
+        "findings": [finding_to_dict(f, i) for i, f in enumerate(findings)],
         "score": standards.score(findings),
         "coverage": standards.coverage_matrix(findings),
     }
