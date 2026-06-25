@@ -23,11 +23,11 @@ def check(prs) -> list[Finding]:
             address = None
         if not address:
             continue
-        # A run with an underline set to True is accessible; None/False means
-        # the underline is absent (may inherit a theme default, but we cannot
-        # resolve theme colors here — flag conservatively).
-        underline = run.font.underline
-        if underline:
+        # Only flag when the author has EXPLICITLY removed underline (False).
+        # None means inherited/theme default — Office themes underline links
+        # by default, so we cannot call this a violation without resolving
+        # the theme.  True means underline is present → accessible.
+        if run.font.underline is not False:
             continue
         findings.append(
             Finding(
@@ -36,8 +36,8 @@ def check(prs) -> list[Finding]:
                 slide_index=i,
                 shape_ref=shape_ref(i, shape),
                 message=(
-                    "Link is distinguished by color only; "
-                    "add an underline or other non-color cue."
+                    "Hyperlink has its underline removed; "
+                    "it's distinguished by color only."
                 ),
                 suggestion="Underline link text so it's identifiable without color.",
                 sc_refs=["1.4.1"],

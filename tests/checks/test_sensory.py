@@ -29,16 +29,6 @@ def test_flags_position_instruction():
     assert f.section508 is True
 
 
-def test_flags_see_below():
-    prs = _deck_with_text("See below for details.")
-    assert any(f.check_id == "sensory" for f in check(prs))
-
-
-def test_flags_shown_above():
-    prs = _deck_with_text("As shown above, the chart confirms the trend.")
-    assert any(f.check_id == "sensory" for f in check(prs))
-
-
 def test_flags_click_green_button():
     prs = _deck_with_text("Click the green button to submit.")
     assert any(f.check_id == "sensory" for f in check(prs))
@@ -46,11 +36,6 @@ def test_flags_click_green_button():
 
 def test_flags_the_red_one():
     prs = _deck_with_text("Choose the red one from the list.")
-    assert any(f.check_id == "sensory" for f in check(prs))
-
-
-def test_flags_see_to_the_right():
-    prs = _deck_with_text("See to the right for the legend.")
     assert any(f.check_id == "sensory" for f in check(prs))
 
 
@@ -62,6 +47,18 @@ def test_case_insensitive():
 # ---------------------------------------------------------------------------
 # Negative cases (must NOT flag)
 # ---------------------------------------------------------------------------
+
+def test_see_below_not_flagged():
+    """Normal lecture phrase 'See below for details.' must NOT be flagged."""
+    prs = _deck_with_text("See below for details.")
+    assert check(prs) == []
+
+
+def test_shown_above_not_flagged():
+    """Normal lecture phrase 'As shown above, ...' must NOT be flagged."""
+    prs = _deck_with_text("As shown above, the chart confirms the trend.")
+    assert check(prs) == []
+
 
 def test_clean_text_no_finding():
     prs = _deck_with_text("Click the Submit button labelled 'OK' to continue.")
@@ -89,7 +86,7 @@ def test_deduplicates_per_shape():
     # Add two paragraphs each with a sensory-only run
     tf.paragraphs[0].add_run().text = "Click the box on the left."
     p2 = tf.add_paragraph()
-    p2.add_run().text = "See below for the answer."
+    p2.add_run().text = "Click the green button to confirm."
     findings = check(prs)
     # Should only produce ONE finding for this shape (deduplication by shape)
     assert len(findings) == 1

@@ -22,9 +22,9 @@ def _deck_with_link(text: str, underline: bool | None) -> Presentation:
 # Positive cases (should flag)
 # ---------------------------------------------------------------------------
 
-def test_flags_link_without_underline():
-    """Hyperlinked run with no underline must be flagged."""
-    prs = _deck_with_link("Our research page", underline=None)
+def test_flags_link_with_underline_explicitly_false():
+    """Hyperlinked run with underline explicitly set to False must be flagged."""
+    prs = _deck_with_link("Download here", underline=False)
     findings = check(prs)
     assert len(findings) == 1
     f = findings[0]
@@ -34,17 +34,22 @@ def test_flags_link_without_underline():
     assert f.category == "color"
     assert f.section508 is True
     assert f.wcag_version == "2.0"
-
-
-def test_flags_link_with_underline_false():
-    """Explicitly underline=False must also be flagged."""
-    prs = _deck_with_link("Download here", underline=False)
-    assert any(f.check_id == "use_of_color" for f in check(prs))
+    assert "underline removed" in f.message
 
 
 # ---------------------------------------------------------------------------
 # Negative cases (must NOT flag)
 # ---------------------------------------------------------------------------
+
+def test_no_finding_for_link_with_underline_none():
+    """Hyperlinked run with underline=None (inherited/theme default) must NOT be flagged.
+
+    Office themes underline links by default; we cannot resolve the theme here,
+    so None must be treated as 'may be underlined' — not a violation.
+    """
+    prs = _deck_with_link("Our research page", underline=None)
+    assert check(prs) == []
+
 
 def test_no_finding_for_underlined_link():
     """Hyperlinked run WITH underline must not be flagged."""
@@ -72,7 +77,7 @@ def test_no_finding_empty_deck():
 # ---------------------------------------------------------------------------
 
 def test_target_has_shape_id():
-    prs = _deck_with_link("Visit our site", underline=None)
+    prs = _deck_with_link("Visit our site", underline=False)
     f = check(prs)[0]
     assert "shape_id" in f.target
     assert f.target.get("slide") == 0
@@ -80,6 +85,6 @@ def test_target_has_shape_id():
 
 def test_severity_is_warning():
     from pptx_a11y.models import Severity
-    prs = _deck_with_link("Visit our site", underline=None)
+    prs = _deck_with_link("Visit our site", underline=False)
     f = check(prs)[0]
     assert f.severity == Severity.WARNING

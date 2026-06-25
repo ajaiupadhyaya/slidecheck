@@ -16,15 +16,12 @@ from pptx_a11y.textutil import iter_runs
 
 # Conservative patterns chosen to catch clear-cut sensory-only instructions
 # while minimising false positives on normal prose.
+# NOTE: the "see below / shown above" pattern was removed because it fires on
+# normal lecture phrases like "See below for details" / "As shown above".
 _PATTERNS: list[re.Pattern] = [
     # "the button/box/link/one on the left/right"
     re.compile(
         r"\bthe\s+(button|box|link|icon|one)\s+(on\s+the|to\s+the)\s+(left|right)\b",
-        re.IGNORECASE,
-    ),
-    # "see below / shown above / see to the right / shown to the left"
-    re.compile(
-        r"\b(see|shown)\s+(below|above|to\s+the\s+(right|left))\b",
         re.IGNORECASE,
     ),
     # "click the red/green/blue/round/square button/box/one"

@@ -27,12 +27,16 @@ def check(prs) -> list[Finding]:
         # warning because the presenter cannot pause via clicking.
         adv_click_off = transition.get("advClick") == "0"
         if has_adv_tm or adv_click_off:
+            if has_adv_tm:
+                msg = "Slide advances automatically on a timer; users can't control the pace."
+            else:
+                msg = "Slide can't be advanced by clicking, which can trap keyboard/AT users."
             findings.append(
                 Finding(
                     check_id="motion",
                     severity=Severity.WARNING,
                     slide_index=i,
-                    message="Slide advances automatically; users can't control the pace.",
+                    message=msg,
                     suggestion=(
                         "Remove automatic slide timing "
                         "(Transitions > uncheck 'After')."
