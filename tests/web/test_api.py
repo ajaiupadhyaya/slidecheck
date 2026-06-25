@@ -79,3 +79,30 @@ def test_process_rejects_oversize(monkeypatch):
         headers={"x-slidecheck-password": "secret"},
     )
     assert r.status_code == 413
+
+
+def test_process_wrong_password_is_401(monkeypatch, tmp_path):
+    client = _client(monkeypatch)  # configures SLIDECHECK_PASSWORD=secret
+    r = client.post(
+        "/api/process",
+        files={"files": ("d.pptx", _pptx(tmp_path))},
+        headers={"x-slidecheck-password": "definitely-wrong"},
+    )
+    assert r.status_code == 401
+
+
+def test_check_password_non_ascii_returns_401_not_500(monkeypatch):
+    import pytest
+    from fastapi import HTTPException
+    from starlette.requests import Request
+
+    from api.index import _check_password
+
+    monkeypatch.setenv("SLIDECHECK_PASSWORD", "café-secret")  # non-ASCII configured pw
+    scope = {
+        "type": "http",
+        "headers": [(b"x-slidecheck-password", "wröng".encode("latin-1"))],
+    }
+    with pytest.raises(HTTPException) as exc_info:
+        _check_password(Request(scope))
+    assert exc_info.value.status_code == 401  # clean 401, not a TypeError/500

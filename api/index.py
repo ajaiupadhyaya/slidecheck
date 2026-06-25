@@ -33,7 +33,7 @@ def _check_password(request: Request) -> None:
     if not expected:
         raise HTTPException(status_code=503, detail="Server not configured: set SLIDECHECK_PASSWORD.")
     provided = request.headers.get("x-slidecheck-password", "")
-    if not hmac.compare_digest(provided, expected):
+    if not hmac.compare_digest(provided.encode("utf-8"), expected.encode("utf-8")):
         raise HTTPException(status_code=401, detail="Wrong or missing password.")
 
 
