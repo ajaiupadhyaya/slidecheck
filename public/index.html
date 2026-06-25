@@ -3,34 +3,73 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SlideCheck — PowerPoint accessibility</title>
-  <link rel="icon" href="data:," />
+  <title>SlideCheck — PowerPoint accessibility studio</title>
+  <meta name="description" content="Check a PowerPoint against WCAG 2.1 AA and Section 508, accept fixes one by one, and download an accessible copy. Your file is never stored." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230E5C54'/%3E%3Cpath d='M9 16.5l4.5 4.5L23 11' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <main>
-    <h1>SlideCheck</h1>
-    <p class="tagline">Check and auto-fix PowerPoint accessibility. Your original file is never changed — you get a fixed copy.</p>
+  <a class="skip-link" href="#main">Skip to content</a>
 
-    <section id="gate" hidden>
-      <label for="password">Enter the access password</label>
-      <div class="gate-row">
-        <input id="password" type="password" autocomplete="current-password" />
-        <button id="unlock" type="button">Continue</button>
-      </div>
-      <p id="gate-error" class="error" role="alert"></p>
+  <header class="site-header">
+    <div class="wrap">
+      <span class="wordmark">
+        <svg class="mark" width="30" height="30" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+          <rect width="32" height="32" rx="7" fill="currentColor" />
+          <path d="M9 16.5l4.5 4.5L23 11" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span class="wordmark-text">SlideCheck</span>
+      </span>
+      <span class="header-tag" aria-hidden="true">accessibility studio</span>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Password gate -->
+    <section id="gate" class="panel gate" hidden aria-labelledby="gate-title">
+      <h1 id="gate-title" class="gate-title">A quiet place to make slides accessible</h1>
+      <p class="gate-lede">Enter the access password to begin. Nothing you upload is saved &mdash; the deck is checked in memory and discarded.</p>
+      <form id="gate-form" class="gate-form" novalidate>
+        <label for="password">Access password</label>
+        <div class="gate-row">
+          <input id="password" name="password" type="password" autocomplete="current-password" autocapitalize="off" spellcheck="false" />
+          <button id="unlock" type="submit" class="btn btn-primary">Continue</button>
+        </div>
+        <p id="gate-error" class="field-error" role="alert" aria-live="assertive"></p>
+      </form>
     </section>
 
-    <section id="app" hidden>
-      <div id="dropzone" tabindex="0" role="button" aria-label="Drop PowerPoint files here or click to choose">
-        <p><strong>Drop your PowerPoint here</strong></p>
-        <p class="muted">or click to choose a .pptx file (you can pick several)</p>
+    <!-- Studio -->
+    <section id="app" class="studio" hidden aria-labelledby="studio-title">
+      <div class="hero">
+        <h1 id="studio-title" class="hero-title">Read the room. Fix the slides.</h1>
+        <p class="hero-lede">Drop a PowerPoint and SlideCheck reads it the way a screen reader would &mdash; flagging missing alt text, low-contrast text, untitled slides and more against <strong>WCAG&nbsp;2.1&nbsp;AA</strong> and <strong>Section&nbsp;508</strong>. You accept each fix; we hand back an accessible copy.</p>
+      </div>
+
+      <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Drop PowerPoint files here, or activate to choose files">
+        <svg class="dz-icon" width="34" height="34" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+        <p class="dz-primary">Drop your PowerPoint here</p>
+        <p class="dz-secondary">or <span class="dz-link">choose a&nbsp;.pptx file</span> &mdash; you can add several at once</p>
         <input id="file-input" type="file" accept=".pptx" multiple hidden />
       </div>
-      <p id="status" class="status" role="status"></p>
-      <div id="results"></div>
+
+      <div id="status" class="status" role="status" aria-live="polite" hidden>
+        <span class="spinner" aria-hidden="true"></span>
+        <span id="status-text" class="status-text"></span>
+      </div>
+
+      <div id="results" class="results"></div>
+
+      <p class="privacy-note">
+        <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        Your file is processed privately in memory and never stored. The original is never changed &mdash; you download a separate, fixed copy.
+      </p>
     </section>
   </main>
+
   <script src="/app.js"></script>
 </body>
 </html>
