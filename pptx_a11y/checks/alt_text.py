@@ -1,7 +1,7 @@
 from pptx.enum.shapes import MSO_SHAPE_TYPE
 from pptx_a11y.checks import iter_shapes, register
 from pptx_a11y.models import Finding, Severity
-from pptx_a11y.refs import shape_ref
+from pptx_a11y.refs import shape_ref, shape_target
 
 _VISUAL_TYPES = {MSO_SHAPE_TYPE.PICTURE, MSO_SHAPE_TYPE.LINKED_PICTURE, MSO_SHAPE_TYPE.CHART}
 
@@ -41,7 +41,8 @@ def check(prs) -> list[Finding]:
             continue
         if _is_decorative(shape):
             continue
-        if not _alt(shape).strip():
+        current_descr = _alt(shape)
+        if not current_descr.strip():
             if shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
                 message = "Image is missing alternative text."
                 suggestion = "Add a short description of the image's content/purpose."
@@ -60,6 +61,15 @@ def check(prs) -> list[Finding]:
                     shape_ref=shape_ref(slide_index, shape),
                     message=message,
                     suggestion=suggestion,
+                    # standards + remediation metadata
+                    sc_refs=["1.1.1"],
+                    wcag_version="2.0",
+                    section508=True,
+                    category="images",
+                    fixable=True,
+                    fix_action="set_alt_text",
+                    current_value=current_descr,
+                    target=shape_target(slide_index, shape),
                 )
             )
     return findings

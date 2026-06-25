@@ -16,6 +16,13 @@ def test_flags_picture_without_alt_text(tmp_path):
     findings = check(prs)
     assert any(f.check_id == "alt_text" and f.slide_index == 0 for f in findings)
     assert findings[0].severity.value == "error"
+    # metadata assertions
+    hit = next(f for f in findings if f.check_id == "alt_text")
+    assert hit.fix_action == "set_alt_text"
+    assert hit.fixable is True
+    assert "shape_id" in hit.target
+    assert hit.sc_refs == ["1.1.1"]
+    assert hit.category == "images"
 
 
 def test_clean_deck_has_no_alt_text_findings(tmp_path):

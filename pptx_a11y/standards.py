@@ -93,6 +93,13 @@ SC_CATALOG: dict[str, dict] = {
         "section508": True,
         "static_applicable": True,
     },
+    "1.4.4": {
+        "title": "Resize Text",
+        "level": "AA",
+        "version": "2.0",
+        "section508": True,
+        "static_applicable": True,
+    },
     "1.4.5": {
         "title": "Images of Text",
         "level": "AA",

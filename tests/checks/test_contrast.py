@@ -23,6 +23,15 @@ def test_flags_low_contrast_with_ratio_and_suggestion(tmp_path):
     assert hits
     assert "ratio" in hits[0].message.lower()
     assert hits[0].suggestion is not None
+    # metadata assertions
+    err_hit = next((f for f in hits if f.severity.value == "error"), None)
+    assert err_hit is not None
+    assert err_hit.fix_action == "apply_contrast_color"
+    assert err_hit.fixable is True
+    assert "shape_id" in err_hit.target and "para" in err_hit.target and "run" in err_hit.target
+    assert err_hit.current_value is not None and err_hit.current_value.startswith("#")
+    assert err_hit.suggested_value is not None and err_hit.suggested_value.startswith("#")
+    assert err_hit.sc_refs == ["1.4.3"]
 
 
 def test_no_false_positive_on_explicit_dark_box(tmp_path):

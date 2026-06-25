@@ -17,6 +17,12 @@ def test_flags_table_without_header_row(tmp_path):
     prs = Presentation(_deck_with_table(str(tmp_path / "t.pptx"), header=False))
     findings = check(prs)
     assert any(f.check_id == "table" for f in findings)
+    # metadata assertions
+    hit = next(f for f in findings if f.check_id == "table")
+    assert hit.fix_action == "set_table_header"
+    assert hit.fixable is True
+    assert "shape_id" in hit.target
+    assert hit.sc_refs == ["1.3.1"]
 
 
 def test_table_with_header_row_ok(tmp_path):

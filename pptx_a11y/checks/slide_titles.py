@@ -16,6 +16,15 @@ def check(prs) -> list[Finding]:
                     slide_index=i,
                     message="Slide has no title.",
                     suggestion="Give every slide a unique, descriptive title.",
+                    # standards + remediation metadata
+                    sc_refs=["2.4.2"],
+                    wcag_version="2.0",
+                    section508=True,
+                    category="structure",
+                    fixable=True,
+                    fix_action="set_title",
+                    current_value=text,
+                    target={"slide": i, "scope": "slide_title"},
                 )
             )
     return findings
