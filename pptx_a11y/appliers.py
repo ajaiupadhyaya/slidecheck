@@ -100,9 +100,10 @@ def set_link_text(prs, target: dict, value) -> bool:
     """
     try:
         run = resolve_target(prs, target)
-        if run is None:
+        # A Run has .hyperlink; a Shape or Presentation does not.
+        # Guard prevents shape-level targets from corrupting the text frame.
+        if run is None or not hasattr(run, "hyperlink"):
             return False
-        # A run object has a .text attribute; a shape would not work here.
         run.text = str(value)
         return True
     except Exception:  # noqa: BLE001
@@ -134,7 +135,8 @@ def apply_contrast_color(prs, target: dict, value) -> bool:
         from pptx.dml.color import RGBColor
 
         run = resolve_target(prs, target)
-        if run is None:
+        # Defense-in-depth: only operate on a Run (has .hyperlink), not a Shape.
+        if run is None or not hasattr(run, "hyperlink"):
             return False
 
         if isinstance(value, str):
@@ -158,7 +160,8 @@ def bump_font_size(prs, target: dict, value) -> bool:
         from pptx.util import Pt
 
         run = resolve_target(prs, target)
-        if run is None:
+        # Defense-in-depth: only operate on a Run (has .hyperlink), not a Shape.
+        if run is None or not hasattr(run, "hyperlink"):
             return False
         run.font.size = Pt(max(18, int(value)))
         return True

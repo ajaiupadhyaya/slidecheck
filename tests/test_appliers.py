@@ -319,7 +319,7 @@ def test_bump_font_size_enforces_minimum_18(tmp_path):
     run, target = _run_and_target(prs)
     ok = bump_font_size(prs, target, 10)  # below minimum
     assert ok is True
-    assert run.font.size.pt >= 18
+    assert run.font.size.pt == 18  # exact floor
 
 
 def test_bump_font_size_returns_false_for_bad_target(tmp_path):
@@ -434,3 +434,106 @@ def test_apply_plan_multiple_actions(tmp_path):
     assert all(r["ok"] for r in results)
     assert prs.core_properties.title == "My Deck"
     assert pic_shape._element._nvXxPr.cNvPr.get("descr") == "A diagram"
+
+
+# ---------------------------------------------------------------------------
+# Fix 1: set_link_text guard — shape-level target must not corrupt text
+# ---------------------------------------------------------------------------
+
+def test_set_link_text_on_shape_target_returns_false_and_preserves_text(tmp_path):
+    """set_link_text on a shape-level target (no para/run) must return False
+    and must NOT corrupt the shape's text frame.  Verified via save→reopen."""
+    from pptx_a11y.appliers import set_link_text
+
+    prs = _prs_with_run(tmp_path)
+    # Locate the hyperlink textbox on slide 1
+    slide1 = prs.slides[1]
+    shape = next(
+        s for s in slide1.shapes
+        if s.has_text_frame
+        and s.text_frame.paragraphs
+        and s.text_frame.paragraphs[0].runs
+        and s.text_frame.paragraphs[0].runs[0].hyperlink.address is not None
+    )
+    original_text = shape.text_frame.paragraphs[0].runs[0].text
+
+    # Shape-level target (no para/run key) — resolve_target returns the Shape
+    shape_only_target = {"slide": 1, "shape_id": shape.shape_id}
+    ok = set_link_text(prs, shape_only_target, "CORRUPTED")
+    assert ok is False
+
+    # Verify text frame is untouched via round-trip
+    buf = io.BytesIO()
+    prs.save(buf)
+    buf.seek(0)
+    prs2 = Presentation(buf)
+    slide1_rt = prs2.slides[1]
+    shape_rt = next(
+        s for s in slide1_rt.shapes
+        if s.has_text_frame
+        and s.text_frame.paragraphs
+        and s.text_frame.paragraphs[0].runs
+        and s.text_frame.paragraphs[0].runs[0].hyperlink.address is not None
+    )
+    assert shape_rt.text_frame.paragraphs[0].runs[0].text == original_text
+
+
+# ---------------------------------------------------------------------------
+# Fix 2: round-trip tests for highest-risk mutations
+# ---------------------------------------------------------------------------
+
+def test_mark_decorative_round_trip(tmp_path):
+    """adec:decorative element must persist after save→reopen."""
+    from pptx_a11y.appliers import mark_decorative
+
+    prs = _prs_with_picture(tmp_path)
+    pic, target = _pic_and_target(prs)
+    ok = mark_decorative(prs, target, None)
+    assert ok is True
+
+    buf = io.BytesIO()
+    prs.save(buf)
+    buf.seek(0)
+    prs2 = Presentation(buf)
+
+    slide0 = prs2.slides[0]
+    pic2 = next(s for s in slide0.shapes if s.shape_type == 13)
+    cNvPr = pic2._element._nvXxPr.cNvPr
+    ns = "http://schemas.microsoft.com/office/drawing/2017/decorative"
+    found = cNvPr.find(f"{{{ns}}}decorative")
+    assert found is not None, "adec:decorative element did not survive round-trip"
+    assert found.get("val") == "1"
+
+
+def test_set_table_header_round_trip(tmp_path):
+    """first_row=True must persist after save→reopen."""
+    from pptx_a11y.appliers import set_table_header
+
+    prs = _prs_with_table(tmp_path)
+    shape, target = _table_shape_target(prs)
+    ok = set_table_header(prs, target, None)
+    assert ok is True
+
+    buf = io.BytesIO()
+    prs.save(buf)
+    buf.seek(0)
+    prs2 = Presentation(buf)
+
+    tbl = next(s for s in prs2.slides[0].shapes if s.has_table).table
+    assert tbl.first_row is True
+
+
+def test_set_doc_language_round_trip(tmp_path):
+    """core_properties.language must persist after save→reopen."""
+    from pptx_a11y.appliers import set_doc_language
+
+    prs = _prs_with_picture(tmp_path)
+    ok = set_doc_language(prs, {"scope": "document"}, "de-DE")
+    assert ok is True
+
+    buf = io.BytesIO()
+    prs.save(buf)
+    buf.seek(0)
+    prs2 = Presentation(buf)
+
+    assert prs2.core_properties.language == "de-DE"
