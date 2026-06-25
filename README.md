@@ -12,15 +12,24 @@ report. **Originals are never modified** — a `*_accessible.pptx` copy is produ
 
 For a folder, each deck gets its own report **and** a single `index.html` summary linking them all.
 
-## Web app (no install)
+## Web app — interactive remediation studio (no install)
 
-SlideCheck also runs as a web app — open the URL, enter the access password, and
-drop your `.pptx` files in the browser. You get a fixed copy and an accessibility
-report to download. Files are processed in memory and **never stored**.
+SlideCheck also runs as a web app: open the URL, enter the access password, and
+drop a `.pptx`. Instead of a static report, you get an **interactive remediation
+studio** — an accessibility **score + letter grade**, a **WCAG 2.1 AA / Section
+508 coverage matrix**, and a **per-issue worklist**. Each issue explains itself
+in plain language (with the offending image/text and its success criterion) and
+offers an **AI-drafted fix you can Accept, edit, or Skip**; the score climbs as
+you go. One click downloads a deck with **exactly the fixes you approved**, plus
+a report. Files are processed in memory and **never stored**; the original is
+never modified.
 
-- **Architecture:** the same `pptx_a11y` engine, wrapped by a FastAPI app
-  (`api/index.py`) that serves the static front end in `public/`. Hosted as a
-  long-running container on [Fly.io](https://fly.io) (no upload-size cap or
+- **Architecture:** a stateless two-phase flow over the same `pptx_a11y` engine —
+  `POST /api/analyze` returns findings + AI suggestions + score + coverage (it
+  saves nothing); the browser builds a fix-plan from your choices; `POST
+  /api/export` applies exactly that plan and returns the fixed deck. Served by a
+  FastAPI app (`api/index.py`) with the static front end in `public/`, hosted as
+  a long-running container on [Fly.io](https://fly.io) (no upload-size cap or
   request timeout, unlike serverless).
 - **Configuration (Fly secrets):** `ANTHROPIC_API_KEY` (server-side Claude key
   for AI alt text) and `SLIDECHECK_PASSWORD` (the access password). Optional
