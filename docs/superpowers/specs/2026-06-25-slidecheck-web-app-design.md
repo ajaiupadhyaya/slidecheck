@@ -87,8 +87,10 @@ absent there.
 **`pptx_a11y/web/service.py` (new).** A thin, framework-agnostic adapter:
 - Input: a filename + file bytes (one or many).
 - Writes bytes into a fresh `tempfile.TemporaryDirectory`, calls
-  `process_file(path, describer, out_dir=tmp)`, and for multiple files also
-  builds the batch index via `report.batch_index`.
+  `process_file(path, describer, out_dir=tmp)`, and returns per-file summaries.
+  (The engine's `report.batch_index` writes filesystem-relative report links
+  unsuitable for a stateless response, so the multi-file overview table is
+  composed client-side from these per-file summaries instead.)
 - Returns an in-memory result object: the `FileResult`(s), the rendered report
   HTML (already produced by the engine), and the bytes of the
   `_accessible.pptx` artifact(s).
@@ -120,7 +122,8 @@ minimal weight and zero build step:
   the engine's HTML report rendered inline, and prominent buttons **"Download
   fixed PowerPoint"** and **"Download report"** (built as in-browser Blob URLs
   from the base64 bytes already in the response — no server round-trip). Batch
-  uploads show the per-deck index.
+  uploads show an overview table composed client-side from the per-file
+  summaries.
 
 **`vercel.json` (new).** Routes static assets from `public/`, routes `/api/*`
 to the Python function, pins the Python runtime, and sets function
