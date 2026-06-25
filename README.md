@@ -12,6 +12,29 @@ report. **Originals are never modified** — a `*_accessible.pptx` copy is produ
 
 For a folder, each deck gets its own report **and** a single `index.html` summary linking them all.
 
+## Web app (no install)
+
+SlideCheck also runs as a web app — open the URL, enter the access password, and
+drop your `.pptx` files in the browser. You get a fixed copy and an accessibility
+report to download. Files are processed in memory and **never stored**.
+
+- **Architecture:** the same `pptx_a11y` engine, wrapped by a FastAPI app
+  (`api/index.py`) that serves the static front end in `public/`. Hosted as a
+  long-running container on [Fly.io](https://fly.io) (no upload-size cap or
+  request timeout, unlike serverless).
+- **Configuration (Fly secrets):** `ANTHROPIC_API_KEY` (server-side Claude key
+  for AI alt text) and `SLIDECHECK_PASSWORD` (the access password). Optional
+  non-secret env in `fly.toml`: `SLIDECHECK_MAX_UPLOAD_MB` (default 40),
+  `SLIDECHECK_MAX_AI_IMAGES` (default 40).
+- **Local dev:** `SLIDECHECK_PASSWORD=dev uv run uvicorn api.index:app --reload`,
+  then open http://localhost:8000.
+- **Deploy:**
+  ```bash
+  fly launch --no-deploy          # first time: creates/links the app from fly.toml
+  fly secrets set ANTHROPIC_API_KEY=sk-... SLIDECHECK_PASSWORD=your-password
+  fly deploy
+  ```
+
 ## What it does
 - **Auto-fixes:** missing image alt text (AI-generated), missing slide titles, document title
   and language.

@@ -1,0 +1,26 @@
+# Fly.io config for the SlideCheck web app.
+# `fly launch` may rename the app; secrets (ANTHROPIC_API_KEY, SLIDECHECK_PASSWORD)
+# are set with `fly secrets set ...`, NOT here.
+app = "slidecheck-a11y"
+primary_region = "iad"
+
+[build]
+
+[env]
+  # Non-secret tunables. Uploads are bounded by VM memory, not a platform cap.
+  SLIDECHECK_MAX_UPLOAD_MB = "40"
+  SLIDECHECK_MAX_AI_IMAGES = "40"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # Suspend the machine when idle and resume (from a RAM snapshot, ~1s) on the
+  # next request — effectively always-available at near-zero idle cost. Set
+  # min_machines_running = 1 if you want it permanently warm with zero wake.
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"

@@ -1,0 +1,8 @@
+# Runtime dependencies for the web app container (Fly.io).
+# Deliberately EXCLUDES tkinterdnd2 (desktop GUI only) and all dev/test tools.
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+python-pptx>=1.0.2
+pillow>=12.2.0
+anthropic>=0.111.0

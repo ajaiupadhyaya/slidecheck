@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SlideCheck — PowerPoint accessibility</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main>
+    <h1>SlideCheck</h1>
+    <p class="tagline">Check and auto-fix PowerPoint accessibility. Your original file is never changed — you get a fixed copy.</p>
+
+    <section id="gate" hidden>
+      <label for="password">Enter the access password</label>
+      <div class="gate-row">
+        <input id="password" type="password" autocomplete="current-password" />
+        <button id="unlock" type="button">Continue</button>
+      </div>
+      <p id="gate-error" class="error" role="alert"></p>
+    </section>
+
+    <section id="app" hidden>
+      <div id="dropzone" tabindex="0" role="button" aria-label="Drop PowerPoint files here or click to choose">
+        <p><strong>Drop your PowerPoint here</strong></p>
+        <p class="muted">or click to choose a .pptx file (you can pick several)</p>
+        <input id="file-input" type="file" accept=".pptx" multiple hidden />
+      </div>
+      <p id="status" class="status" role="status"></p>
+      <div id="results"></div>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
