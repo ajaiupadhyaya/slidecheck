@@ -72,3 +72,14 @@ def test_same_named_batch_uploads_do_not_collide(tmp_path):
     # distinct content preserved, not overwritten: one clean, one with errors
     assert res.files[0].summary["error"] == 0
     assert res.files[1].summary["error"] >= 1
+
+
+def test_report_uses_original_filename_not_temp_path(tmp_path):
+    import tempfile
+
+    data = _bytes(tmp_path, deck_with_issues)
+    res = process_uploads([("My Lecture.pptx", data)], NullDescriber())
+    html = res.files[0].report_html
+    assert "My Lecture.pptx" in html              # the user's filename appears
+    assert tempfile.gettempdir() not in html      # no server temp path leaks
+    assert res.files[0].fixed_filename == "My Lecture_accessible.pptx"

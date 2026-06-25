@@ -48,6 +48,9 @@ def process_uploads(uploads: list[tuple[str, bytes]], describer) -> WebResult:
                     continue
                 with open(result.output_path, "rb") as fh:
                     fixed_bytes = fh.read()
+                # Show the user's own filename in the report, not the server temp path.
+                result.source_path = filename
+                result.output_path = os.path.basename(result.output_path)
             except Exception as exc:  # noqa: BLE001 - any failure becomes a per-file error, never a 500
                 outputs.append(FileOutput(filename=filename, error=str(exc)))
                 continue

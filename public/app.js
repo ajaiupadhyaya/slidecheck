@@ -48,7 +48,7 @@ async function upload(fileList) {
     return;
   }
 
-  if (resp.status === 401) { sessionStorage.removeItem(PW_KEY); showGate("That password didn't work. Try again."); $("status").textContent = ""; return; }
+  if (resp.status === 401) { sessionStorage.removeItem(PW_KEY); showGate("That password didn't work. Try again."); $("status").textContent = ""; document.getElementById("password").focus(); return; }
   if (!resp.ok) {
     let detail = `Something went wrong (error ${resp.status}).`;
     try { const j = await resp.json(); if (j.detail) detail = j.detail; } catch {}
@@ -146,6 +146,7 @@ function fileCard(f) {
   const frame = document.createElement("iframe");
   frame.className = "report-frame";
   frame.title = `Accessibility report for ${f.filename}`;
+  frame.setAttribute("sandbox", "");  // block scripts in user-derived report HTML; inline CSS still renders
   frame.srcdoc = f.report_html;
   card.appendChild(frame);
   return card;
@@ -160,7 +161,10 @@ function downloadButton(label, filename, blob) {
   const btn = document.createElement("button");
   btn.type = "button";
   btn.textContent = label;
-  btn.addEventListener("click", () => a.click());
+  btn.addEventListener("click", () => {
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 0);
+  });
   return btn;
 }
 
