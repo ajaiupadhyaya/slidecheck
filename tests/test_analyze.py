@@ -150,6 +150,24 @@ def test_analyze_result_finding_ids_all_unique(issues_prs):
     assert len(ids) == len(set(ids)), "analyze() finding ids must be unique"
 
 
+def test_clean_suggestion_strips_markdown_and_quotes():
+    from pptx_a11y.analyze import _clean_suggestion
+    assert _clean_suggestion("**Visit Example.com**") == "Visit Example.com"
+    assert _clean_suggestion('"A red square"') == "A red square"
+    assert _clean_suggestion("`code`") == "code"
+    assert _clean_suggestion("  Plain Title  ") == "Plain Title"
+    assert _clean_suggestion("“Curly Quotes”") == "Curly Quotes"
+
+
+def test_clean_suggestion_drops_rambles_overlong_and_empty():
+    from pptx_a11y.analyze import _clean_suggestion
+    assert _clean_suggestion("It looks like your message got cut off! Could you share?") is None
+    assert _clean_suggestion("As an AI, I cannot see the slide") is None
+    assert _clean_suggestion("x" * 200) is None
+    assert _clean_suggestion("") is None
+    assert _clean_suggestion(None) is None
+
+
 def test_finding_to_dict_sc_refs_is_list(issues_prs):
     findings = run_checks(issues_prs)
     for f in findings:

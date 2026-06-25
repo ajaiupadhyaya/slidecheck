@@ -71,6 +71,35 @@ def _presentation_text(prs, max_chars: int = 400) -> str:
     return ""
 
 
+_META_MARKERS = (
+    "cut off", "could you", "i'd be happy", "i would be happy", "please share",
+    "please provide", "as an ai", "i don't have", "i do not have", "i cannot",
+    "i can't", "let me know", "happy to help", "it looks like", "i'm unable",
+    "i am unable", "without seeing", "more context",
+)
+
+
+def _clean_suggestion(text: str | None, max_len: int = 90) -> str | None:
+    """Tidy a model suggestion for display: strip surrounding markdown/quotes and
+    drop obvious non-answers (refusals, rambles, over-long text), so the textarea
+    shows a clean, usable value or nothing (the user can then type their own)."""
+    if not text:
+        return None
+    s = text.strip()
+    for mark in ("**", "*", "`", "_"):
+        while s.startswith(mark) and s.endswith(mark) and len(s) > 2 * len(mark):
+            s = s[len(mark):-len(mark)].strip()
+    quotes = ('"', "'", "“", "”", "‘", "’")
+    while len(s) >= 2 and s[0] in quotes and s[-1] in quotes:
+        s = s[1:-1].strip()
+    if not s or len(s) > max_len:
+        return None
+    low = s.lower()
+    if any(m in low for m in _META_MARKERS):
+        return None
+    return s
+
+
 # ---------------------------------------------------------------------------
 # generate_suggestions
 # ---------------------------------------------------------------------------
@@ -124,7 +153,9 @@ def generate_suggestions(prs, findings: list[Finding], describer: "Describer") -
                 continue
             blob, media_type = result
             context = _slide_text(prs, f.slide_index) or f.message
-            f.suggested_value = describer.describe(blob, media_type, context)
+            f.suggested_value = _clean_suggestion(
+                describer.describe(blob, media_type, context), 300
+            )
             continue
 
         if action == "set_title":
@@ -132,10 +163,11 @@ def generate_suggestions(prs, findings: list[Finding], describer: "Describer") -
                 continue
             slide_txt = _slide_text(prs, f.slide_index, 400)
             prompt = (
-                "Write a 3-6 word descriptive slide title for a slide containing: "
+                "Suggest a 3-6 word descriptive slide title for a slide containing: "
                 + slide_txt
+                + "\n\nReply with ONLY the title text — no quotes, no markdown, no explanation."
             )
-            f.suggested_value = describer.suggest_text(prompt)
+            f.suggested_value = _clean_suggestion(describer.suggest_text(prompt), 90)
             continue
 
         if action == "set_link_text":
@@ -143,24 +175,19 @@ def generate_suggestions(prs, findings: list[Finding], describer: "Describer") -
                 continue
             obj = refs.resolve_target(prs, f.target)
             url = ""
-            surrounding = ""
             if obj is not None:
                 try:
                     url = obj.hyperlink.address or ""
                 except Exception:  # noqa: BLE001
                     pass
-                try:
-                    # surrounding text = the paragraph text
-                    surrounding = obj._r.getparent().text or ""
-                except Exception:  # noqa: BLE001
-                    surrounding = f.message
+            surrounding = _slide_text(prs, f.slide_index, 200)
             prompt = (
-                "Write concise descriptive link text (3-6 words) for a hyperlink to "
-                + url
-                + " in context: "
-                + surrounding
+                "Suggest concise descriptive link text (2-6 words) for a hyperlink to "
+                + (url or "a web page")
+                + (" on a slide about: " + surrounding if surrounding else "")
+                + "\n\nReply with ONLY the link text — no quotes, no markdown, no explanation."
             )
-            f.suggested_value = describer.suggest_text(prompt)
+            f.suggested_value = _clean_suggestion(describer.suggest_text(prompt), 90)
             continue
 
         if action == "set_doc_title":
@@ -169,10 +196,11 @@ def generate_suggestions(prs, findings: list[Finding], describer: "Describer") -
             pres_text = _presentation_text(prs, 400)
             if pres_text:
                 prompt = (
-                    "Write a 3-6 word descriptive document title for a presentation "
+                    "Suggest a 3-6 word descriptive document title for a presentation "
                     "containing: " + pres_text
+                    + "\n\nReply with ONLY the title text — no quotes, no markdown, no explanation."
                 )
-                result = describer.suggest_text(prompt)
+                result = _clean_suggestion(describer.suggest_text(prompt), 90)
                 f.suggested_value = result if result else "Presentation"
             else:
                 f.suggested_value = "Presentation"
