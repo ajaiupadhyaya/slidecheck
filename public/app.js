@@ -64,11 +64,46 @@ function showGate(msg) {
 function init() {
   if (sessionStorage.getItem(PW_KEY)) showApp(); else showGate("");
 
-  $("gate-form").addEventListener("submit", (e) => {
+  $("gate-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const pw = $("password").value.trim();
     if (!pw) { $("gate-error").textContent = "Enter the password to continue."; $("password").focus(); return; }
+
+    // Validate the password against the server BEFORE entering the app, so a
+    // wrong password is caught here instead of silently bouncing the user back
+    // to the gate on their first upload.
+    const submitBtn = $("unlock");
+    if (submitBtn) submitBtn.disabled = true;
+    $("gate-error").textContent = "Checking…";
+
+    let resp;
+    try {
+      resp = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "x-slidecheck-password": pw },
+      });
+    } catch {
+      $("gate-error").textContent = "Couldn't reach the server. Check your connection and try again.";
+      if (submitBtn) submitBtn.disabled = false;
+      return;
+    }
+
+    if (submitBtn) submitBtn.disabled = false;
+
+    if (resp.status === 401) {
+      $("gate-error").textContent = "That password didn't work. Try again.";
+      $("password").select();
+      return;
+    }
+    if (!resp.ok) {
+      $("gate-error").textContent = resp.status === 503
+        ? "The server isn't configured yet. Please contact whoever set this up."
+        : `Something went wrong (error ${resp.status}). Try again.`;
+      return;
+    }
+
     sessionStorage.setItem(PW_KEY, pw);
+    $("gate-error").textContent = "";
     showApp();
     $("dropzone").focus();
   });

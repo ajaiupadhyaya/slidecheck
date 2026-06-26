@@ -27,6 +27,40 @@ def test_health(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
+# /api/auth — lets the gate validate the password BEFORE the first upload,
+# so a wrong password is rejected immediately instead of silently bouncing
+# the user back to the gate on their first analyze request.
+# ---------------------------------------------------------------------------
+
+def test_auth_accepts_correct_password(monkeypatch):
+    client = _client(monkeypatch)
+    r = client.post("/api/auth", headers={"x-slidecheck-password": "secret"})
+    assert r.status_code == 200
+    assert r.json() == {"ok": True}
+
+
+def test_auth_rejects_wrong_password(monkeypatch):
+    client = _client(monkeypatch)
+    r = client.post("/api/auth", headers={"x-slidecheck-password": "nope"})
+    assert r.status_code == 401
+
+
+def test_auth_rejects_missing_password(monkeypatch):
+    client = _client(monkeypatch)
+    r = client.post("/api/auth")
+    assert r.status_code == 401
+
+
+def test_auth_503_when_unconfigured(monkeypatch):
+    monkeypatch.delenv("SLIDECHECK_PASSWORD", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    from api.index import app
+    client = TestClient(app)
+    r = client.post("/api/auth", headers={"x-slidecheck-password": "anything"})
+    assert r.status_code == 503
+
+
+# ---------------------------------------------------------------------------
 # /api/analyze
 # ---------------------------------------------------------------------------
 

@@ -44,6 +44,15 @@ def health():
     return {"ok": True}
 
 
+@app.post("/api/auth")
+def auth(request: Request):
+    """Validate the shared password so the gate can reject a wrong one
+    immediately, instead of letting the user in and silently bouncing them
+    back to the gate on their first upload (401 from /api/analyze)."""
+    _check_password(request)
+    return {"ok": True}
+
+
 @app.post("/api/analyze")
 async def analyze(request: Request, files: list[UploadFile]):
     _check_password(request)
