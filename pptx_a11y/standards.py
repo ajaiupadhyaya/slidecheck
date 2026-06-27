@@ -65,12 +65,13 @@ SC_CATALOG: dict[str, dict] = {
         "section508": False,
         "static_applicable": True,
     },
+    # Interactive-only — applies to form-input autocomplete, never to static slides.
     "1.3.5": {
         "title": "Identify Input Purpose",
         "level": "AA",
         "version": "2.1",
         "section508": False,
-        "static_applicable": True,
+        "static_applicable": False,
     },
     "1.4.1": {
         "title": "Use of Color",
@@ -208,7 +209,14 @@ SC_CATALOG: dict[str, dict] = {
 }
 
 # SCs the tool can only flag for human judgment — never auto-pass.
-NEEDS_REVIEW_SC: set[str] = {"1.4.1", "1.2.2", "1.3.2", "1.4.5", "1.4.11", "2.3.1"}
+# 1.3.4 (Orientation), 1.4.2 (Audio Control), and 3.1.2 (Language of Parts)
+# have no reliable automated detector for slide decks (3.1.2 would require
+# language identification of unmarked text), so they are surfaced for human
+# review rather than reported as a (misleading) structural PASS.
+NEEDS_REVIEW_SC: set[str] = {
+    "1.4.1", "1.2.2", "1.3.2", "1.4.5", "1.4.11", "2.3.1",
+    "1.3.4", "1.4.2", "3.1.2",
+}
 
 
 # ---------------------------------------------------------------------------

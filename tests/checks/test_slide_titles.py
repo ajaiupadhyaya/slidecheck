@@ -1,5 +1,4 @@
 from pptx import Presentation
-from pptx.util import Inches
 
 from pptx_a11y.checks.slide_titles import check, check_title_quality
 from tests.fixtures.build import clean_deck, deck_with_issues
@@ -105,6 +104,51 @@ def test_title_quality_metadata():
     assert f.fix_action == "set_title"
     assert f.target == {"slide": 0, "scope": "slide_title"}
     assert f.current_value == "Slide 1"
+
+
+# ---------------------------------------------------------------------------
+# title_quality: weak-title heuristics (long / all-caps / numeric-only)
+# ---------------------------------------------------------------------------
+
+def test_flags_overly_long_title():
+    prs = _deck_with_titles("A" * 85)
+    findings = check_title_quality(prs)
+    assert any("long" in f.message.lower() for f in findings)
+
+
+def test_does_not_flag_normal_length_title_as_long():
+    prs = _deck_with_titles("Introduction to Machine Learning")
+    findings = check_title_quality(prs)
+    assert not any("long" in f.message.lower() for f in findings)
+
+
+def test_flags_all_caps_title_without_destructive_suggestion():
+    # All-caps titles often contain acronyms ("NASA BUDGET 2024"); a naive
+    # .title() would mangle them ("Nasa Budget 2024"). So we flag but do NOT
+    # offer an auto-fillable suggestion — the human rewrites it.
+    prs = _deck_with_titles("NASA BUDGET 2024")
+    findings = check_title_quality(prs)
+    hit = next((f for f in findings if "capital" in f.message.lower()), None)
+    assert hit is not None
+    assert hit.suggested_value is None
+
+
+def test_does_not_flag_short_acronym_title_as_all_caps():
+    # single-word acronyms (FAQ, API) are legitimate titles, not shouting.
+    prs = _deck_with_titles("FAQ")
+    findings = check_title_quality(prs)
+    assert not any("capital" in f.message.lower() for f in findings)
+
+
+def test_flags_numeric_only_title():
+    prs = _deck_with_titles("2.3")
+    findings = check_title_quality(prs)
+    assert any("number" in f.message.lower() for f in findings)
+
+
+def test_descriptive_mixedcase_title_has_no_quality_findings():
+    prs = _deck_with_titles("Results and Discussion")
+    assert check_title_quality(prs) == []
 
 
 def test_empty_deck_no_title_quality_findings():

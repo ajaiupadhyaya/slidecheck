@@ -11,6 +11,10 @@
 const PW_KEY = "slidecheck-password";
 const $ = (id) => document.getElementById(id);
 
+// Whether this deployment requires the shared password. Discovered from
+// /api/config at startup; defaults to true so we fail safe (gate shown).
+let _passwordRequired = true;
+
 /* ---- scoring (mirrors the spec's client formula) ---- */
 const WEIGHT = { error: 8, warning: 3, info: 1 };
 function computeScore(findings, acceptedIds) {
@@ -61,8 +65,15 @@ function showGate(msg) {
 /* ============================================================
    Init / wiring
    ============================================================ */
-function init() {
-  if (sessionStorage.getItem(PW_KEY)) showApp(); else showGate("");
+async function init() {
+  // Local/offline deployments can disable the gate (SLIDECHECK_REQUIRE_PASSWORD=false).
+  try {
+    const cfg = await fetch("/api/config").then((r) => (r.ok ? r.json() : null));
+    if (cfg && cfg.require_password === false) _passwordRequired = false;
+  } catch { /* network error → keep the gate (fail safe) */ }
+
+  if (!_passwordRequired || sessionStorage.getItem(PW_KEY)) showApp();
+  else showGate("");
 
   $("gate-form").addEventListener("submit", async (e) => {
     e.preventDefault();

@@ -61,6 +61,40 @@ def test_auth_503_when_unconfigured(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
+# /api/config + optional password bypass for local/offline use
+# (SLIDECHECK_REQUIRE_PASSWORD=false). Default stays secure: password required.
+# ---------------------------------------------------------------------------
+
+def test_config_reports_password_required_by_default(monkeypatch):
+    client = _client(monkeypatch)
+    r = client.get("/api/config")
+    assert r.status_code == 200
+    assert r.json()["require_password"] is True
+
+
+def test_config_reports_password_not_required_when_disabled(monkeypatch):
+    monkeypatch.setenv("SLIDECHECK_REQUIRE_PASSWORD", "false")
+    client = _client(monkeypatch)
+    assert client.get("/api/config").json()["require_password"] is False
+
+
+def test_analyze_bypasses_password_when_not_required(monkeypatch, tmp_path):
+    # Even with SLIDECHECK_PASSWORD set, the explicit bypass wins and no header
+    # is needed — for a professor running it locally on her own machine.
+    monkeypatch.setenv("SLIDECHECK_REQUIRE_PASSWORD", "false")
+    client = _client(monkeypatch)
+    r = client.post("/api/analyze", files={"files": ("d.pptx", _pptx(tmp_path))})
+    assert r.status_code == 200
+
+
+def test_auth_still_enforced_when_require_password_unset(monkeypatch, tmp_path):
+    # Default deployment posture is unchanged: missing password → 401.
+    client = _client(monkeypatch)
+    r = client.post("/api/analyze", files={"files": ("d.pptx", _pptx(tmp_path))})
+    assert r.status_code == 401
+
+
+# ---------------------------------------------------------------------------
 # /api/analyze
 # ---------------------------------------------------------------------------
 

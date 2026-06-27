@@ -53,3 +53,63 @@ def test_summary_counts_manual_attention():
 def test_html_shows_needs_manual_fix_pill():
     html = html_report.render(_result())
     assert "need manual fix" in html.lower()
+
+
+def test_html_report_has_admin_summary_with_score_and_508():
+    html = html_report.render(_result())
+    low = html.lower()
+    assert "summary for administration" in low
+    assert "section 508" in low
+    assert "grade" in low  # the letter grade is surfaced for an administrator
+
+
+def test_html_report_verdict_flags_508_failure():
+    r = FileResult(
+        source_path="deck.pptx",
+        findings=[
+            Finding(check_id="alt_text", severity=Severity.ERROR, slide_index=0,
+                    message="missing alt", sc_refs=["1.1.1"], section508=True),
+        ],
+    )
+    html = html_report.render(r).lower()
+    assert "must be fixed" in html  # plain-English administrator verdict
+
+
+def test_admin_summary_excludes_autofixed_warnings():
+    # A warning that was auto-fixed must NOT be reported as something to review,
+    # and must not block the "passed all checks" verdict.
+    r = FileResult(
+        source_path="deck.pptx",
+        findings=[
+            Finding(check_id="metadata", severity=Severity.WARNING, slide_index=0,
+                    message="no language", sc_refs=["3.1.1"], section508=True, auto_fixed=True),
+        ],
+    )
+    html = html_report.render(r).lower()
+    # the admin verdict + open-warning tally exclude the already-fixed warning
+    assert "passed all automated accessibility checks" in html
+    assert "open warnings: 0" in html
+
+
+def test_admin_summary_counts_open_508_warning_as_floor_issue():
+    # Missing document language (3.1.1) is a Section 508 floor item even though
+    # it is WARNING severity — when open it must read as a 508 issue, not "meets
+    # the floor".
+    r = FileResult(
+        source_path="deck.pptx",
+        findings=[
+            Finding(check_id="metadata", severity=Severity.WARNING, slide_index=0,
+                    message="no language", sc_refs=["3.1.1"], section508=True),
+        ],
+    )
+    html = html_report.render(r).lower()
+    assert "must be fixed" in html
+
+
+def test_html_report_has_aria_landmarks():
+    html = html_report.render(_result())
+    low = html.lower()
+    assert "<main" in low
+    assert "<nav" in low
+    assert "aria-labelledby" in low
+    assert "<section" in low

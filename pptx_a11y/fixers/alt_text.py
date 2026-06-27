@@ -13,6 +13,23 @@ def _alt(shape) -> str:
         return ""
 
 
+def _slide_context(prs, slide_index: int, max_chars: int = 300) -> str:
+    """Concatenated text from the slide, so the model can write alt text that
+    fits the surrounding content (falls back to 'slide N')."""
+    try:
+        slide = prs.slides[slide_index]
+    except IndexError:
+        return f"slide {slide_index + 1}"
+    parts: list[str] = []
+    for shape in slide.shapes:
+        if getattr(shape, "has_text_frame", False):
+            t = shape.text_frame.text.strip()
+            if t:
+                parts.append(t)
+    text = " ".join(parts).strip()
+    return text[:max_chars] if text else f"slide {slide_index + 1}"
+
+
 @register
 def fix(prs, describer) -> list[Change]:
     changes = []
@@ -25,7 +42,7 @@ def fix(prs, describer) -> list[Change]:
         if payload is None:
             continue
         blob, media_type = payload
-        desc = describer.describe(blob, media_type, f"slide {slide_index + 1}")
+        desc = describer.describe(blob, media_type, _slide_context(prs, slide_index))
         if not desc:
             continue
         shape._element._nvXxPr.cNvPr.set("descr", desc)

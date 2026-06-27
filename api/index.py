@@ -30,7 +30,15 @@ def _max_ai_images() -> int:
     return int(os.environ.get("SLIDECHECK_MAX_AI_IMAGES", "40"))
 
 
+def _password_required() -> bool:
+    """The shared-password gate is on by default; an operator can disable it for
+    a purely local/offline deployment with SLIDECHECK_REQUIRE_PASSWORD=false."""
+    return os.environ.get("SLIDECHECK_REQUIRE_PASSWORD", "true").strip().lower() != "false"
+
+
 def _check_password(request: Request) -> None:
+    if not _password_required():
+        return  # explicit local-mode bypass
     expected = os.environ.get("SLIDECHECK_PASSWORD")
     if not expected:
         raise HTTPException(status_code=503, detail="Server not configured: set SLIDECHECK_PASSWORD.")
@@ -42,6 +50,13 @@ def _check_password(request: Request) -> None:
 @app.get("/api/health")
 def health():
     return {"ok": True}
+
+
+@app.get("/api/config")
+def config():
+    """Public, non-sensitive client config. Lets the front end skip the gate
+    entirely when the password is not required (local mode)."""
+    return {"require_password": _password_required()}
 
 
 @app.post("/api/auth")
